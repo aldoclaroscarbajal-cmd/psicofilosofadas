@@ -1,0 +1,452 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psicofilosofadas: El Camino del Desapego</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "https://esm.sh/react@18.2.0",
+                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+                "lucide-react": "https://esm.sh/lucide-react@0.294.0"
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+        }
+
+        .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Utilidades para el efecto de volteo de tarjeta 3D */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        
+        /* Animaciones suaves */
+        .card-transition { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar estilizado para el embed */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { 
+            Map, BookOpen, CheckCircle, Lock, Unlock, 
+            ArrowLeft, Brain, Sparkles, ChevronRight,
+            HeartPulse, ShieldAlert, Mountain
+        } from 'lucide-react';
+
+        // Contenido de los 30 días. (Se han desarrollado 3 a detalle, el resto sirve de estructura)
+        const DIARY_DATA = [
+            {
+                id: 1,
+                title: "La Ilusión del Control",
+                theme: "Culpa y Autocuidado",
+                icon: HeartPulse,
+                color: "text-rose-500",
+                bgLight: "bg-rose-50",
+                dilemmas: [
+                    {
+                        ageGroup: "0-3 años",
+                        scenario: "La ducha postergada",
+                        problem: "Dejé llorar a mi bebé 3 minutos en la cuna para poder bañarme rápidamente. Mientras el agua caía, sentí que estaba rompiendo su confianza en el mundo y causándole un trauma. Soy egoísta.",
+                        evolutionary: "Tu cerebro está hackeado. Durante milenios, un bebé llorando lejos de su madre era presa fácil. Tu amígdala dispara cortisol haciéndote creer que hay peligro mortal. Pero hoy está a salvo. Evolutivamente no estamos diseñados para criar solos; en la tribu, alguien sostenía al bebé. Tu culpa es biológica, no moral.",
+                        existential: "El mito de la madre/padre omnipotente es una trampa del ego. Renunciar a ser 'todo' para tu hijo es el primer acto real de amor. Al tomarte 3 minutos, le enseñas el primer límite existencial: 'Yo existo, tú existes, y no soy una extensión de tu cuerpo'. Soportar su llanto sin desmoronarte le da seguridad a largo plazo."
+                    },
+                    {
+                        ageGroup: "4-8 años",
+                        scenario: "El vaso derramado",
+                        problem: "Le pedí tres veces que tuviera cuidado. Tiró el vaso, la leche manchó mi ropa y le grité desproporcionadamente. Vi el susto en sus ojos. Me odio por mi falta de paciencia.",
+                        evolutionary: "El estrés acumulado te llevó al 'modo supervivencia'. Tu sistema nervioso interpretó la frustración como una amenaza a tus recursos (energía, tiempo). No le gritaste a un niño, reaccionaste como un primate defendiendo su territorio tras haber agotado su corteza prefrontal.",
+                        existential: "La paternidad perfecta es una ilusión estéril. Lo valioso no es la ausencia de ruptura, sino la capacidad de reparación. Cuando te agachas y dices 'Me equivoqué al gritarte', le regalas filosofía pura: los humanos fallamos, el mundo es caótico, pero el vínculo se restaura. Le enseñas a perdonarse a sí mismo en el futuro."
+                    },
+                    {
+                        ageGroup: "9-15 años",
+                        scenario: "La puerta cerrada",
+                        problem: "Mi hijo prefiere estar encerrado en su cuarto que pasar el domingo en familia. Cuando le pregunto qué le pasa, solo responde 'nada'. Siento como si lo hubiera perdido.",
+                        evolutionary: "Está haciendo para lo que la evolución lo programó. Para sobrevivir, los adolescentes DEBEN transferir su apego del nido familiar hacia sus pares. Ese rechazo temporal es el motor biológico para formar nuevas tribus. Su puerta cerrada es un triunfo evolutivo, no una falta de amor.",
+                        existential: "Atraviesas el luto de tu rol. Ya no eres el director de su obra, pasas a ser el espectador en primera fila. Esta es la angustia de la separación existencial: reconocer que tu hijo es un 'Otro' absoluto. Tu trabajo no es derribar la puerta, sino mantener una luz encendida afuera para cuando decida salir."
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "El Caos Necesario",
+                theme: "Rabietas y Regulación",
+                icon: ShieldAlert,
+                color: "text-amber-500",
+                bgLight: "bg-amber-50",
+                dilemmas: [
+                    {
+                        ageGroup: "0-3 años",
+                        scenario: "El colapso en el súper",
+                        problem: "Se tiró al suelo a gritar porque le negué un dulce. Todos me miraban. Sentí vergüenza, rabia y terminé cediendo o jalándolo bruscamente. Soy un fracaso.",
+                        evolutionary: "Su corteza prefrontal (la lógica) está literalmente apagada por una inundación emocional. Es un colapso del sistema, no manipulación. Tu vergüenza es la 'ansiedad de estatus' tribal: temes ser expulsado del grupo por no controlar a tu cría. Entender la biología desactiva tu propia amenaza.",
+                        existential: "Quieres domar la marea. La rabieta es el recordatorio físico de lo incontrolable de la vida. Tu tarea no es detener la tormenta, sino ser el faro que permanece inamovible. Al no reaccionar con más caos, le demuestras que el mundo no se destruye con sus emociones intensas."
+                    },
+                    {
+                        ageGroup: "4-8 años",
+                        scenario: "El 'Te Odio'",
+                        problem: "Le puse un límite claro y me miró a los ojos gritando: '¡Te odio, eres el peor!'. Aunque sé que es un niño, me dolió profundamente y me alejé ofendido.",
+                        evolutionary: "Las palabras son sus nuevas garras. Está probando la elasticidad del vínculo. Evolutivamente, necesita saber: '¿Si soy lo peor, mi cuidador me abandonará?'. Tu respuesta de alejarte valida su miedo más primitivo.",
+                        existential: "El 'Te odio' es en realidad un acto de confianza. Solo le muestra su oscuridad a quien cree que puede soportarla. Abrazar la herida narcisista (que tu hijo no siempre te adorará) te libera para ser un líder firme en lugar de un amigo complaciente."
+                    },
+                    {
+                        ageGroup: "9-15 años",
+                        scenario: "El desprecio silencioso",
+                        problem: "No discute, simplemente voltea los ojos o ignora mis reglas de forma pasivo-agresiva. Siento que mi autoridad se desvanece y la casa es un campo de batalla mudo.",
+                        evolutionary: "El conflicto pasivo es una estrategia de bajo riesgo energético. Está buscando los límites de su propio territorio cognitivo sin arriesgar un ataque físico directo. Es una negociación primitiva de jerarquías.",
+                        existential: "Exiges obediencia cuando lo que necesitas es influencia. La autoridad impuesta se quiebra en la adolescencia; solo sobrevive la autoridad moral (el respeto ganado). Es el momento filosófico de transformar las 'reglas' en 'acuerdos', dándole el peso de la responsabilidad."
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "El Arte de Frustrar",
+                theme: "Límites con Firmeza",
+                icon: Mountain,
+                color: "text-emerald-500",
+                bgLight: "bg-emerald-50",
+                dilemmas: [
+                    {
+                        ageGroup: "0-3 años",
+                        scenario: "El peligro inminente",
+                        problem: "Corrió hacia la calle, lo agarré fuerte del brazo, se puso a llorar y me sentí como un monstruo violento por la fuerza que usé.",
+                        evolutionary: "El instinto de supervivencia de la especie prevaleció. Tu cerebro reptiliano anuló cualquier protocolo de 'crianza respetuosa' para asegurar que los genes de tu cría sigan vivos. La fuerza física protectora está inscrita en nuestro ADN.",
+                        existential: "Priorizaste el ser sobre el bienestar temporal. A veces ser el guardián de la vida implica ser el villano de su historia en ese segundo. Acepta el rol de antagonista protector; es un sacrificio que haces para que él siga existiendo."
+                    },
+                    {
+                        ageGroup: "4-8 años",
+                        scenario: "El abandono de la mesa",
+                        problem: "Se negó a comer y tiró el plato. Lo mandé a su cuarto y se fue llorando desconsolado. Ahora me remuerde la conciencia estar aislándolo.",
+                        evolutionary: "El aislamiento social era una sentencia de muerte en la prehistoria. Por eso le aterra a él y te duele a ti aplicarlo. Sin embargo, la regulación comunitaria requiere fronteras. El error no es la distancia, es la desconexión emocional.",
+                        existential: "El límite no es el castigo, es la consecuencia de habitar el mundo material. 'Si tiras la comida, el espacio de nutrición se cierra temporalmente'. Retira la ira y deja solo el límite desnudo. No lo rechazas a él, rechazas la acción. Sostén el límite con paz, no con revancha."
+                    },
+                    {
+                        ageGroup: "9-15 años",
+                        scenario: "La pantalla nocturna",
+                        problem: "Le quité el teléfono a las 10 pm como acordamos, y montó en cólera diciendo que le arruino la vida social. Me hace sentir como un dictador obsoleto.",
+                        evolutionary: "Las redes activan el mismo circuito de dopamina que encontrar alimento calórico para los cazadores. Su cerebro adolescente no tiene los frenos (mielinización) para detenerse. Quitarle el dispositivo se siente, biológicamente para él, como quitarle un recurso de supervivencia vital en la manada.",
+                        existential: "Debes estar dispuesto a ser impopular para ser útil. Ser padre de un adolescente implica soportar la proyección de sus demonios. Eres el ancla que le impide flotar hacia el abismo digital. Aguanta su odio; es la armadura que necesita para formar su propio autocontrol."
+                    }
+                ]
+            }
+        ];
+
+        // Rellenando los días 4 al 30 con estructura genérica para demostrar el mapa completo
+        for (let i = 4; i <= 30; i++) {
+            DIARY_DATA.push({
+                id: i,
+                title: `Día ${i}: Descubrimiento`,
+                theme: "Reflexión Continua",
+                icon: BookOpen,
+                color: "text-slate-400",
+                bgLight: "bg-slate-50",
+                dilemmas: [
+                    { ageGroup: "0-3 años", scenario: "Próximamente...", problem: "Disponible al alcanzar este día.", evolutionary: "...", existential: "..." },
+                    { ageGroup: "4-8 años", scenario: "Próximamente...", problem: "Disponible al alcanzar este día.", evolutionary: "...", existential: "..." },
+                    { ageGroup: "9-15 años", scenario: "Próximamente...", problem: "Disponible al alcanzar este día.", evolutionary: "...", existential: "..." }
+                ]
+            });
+        }
+
+        const DilemmaCard = ({ dilemma }) => {
+            const [isFlipped, setIsFlipped] = useState(false);
+
+            return (
+                <div className="w-full perspective-1000 min-h-[380px] cursor-pointer" onClick={() => setIsFlipped(!isFlipped)}>
+                    <div className={`relative w-full h-full transform-style-3d card-transition ${isFlipped ? 'rotate-y-180' : ''}`}>
+                        
+                        {/* Cara Frontal (El Dilema) */}
+                        <div className="absolute inset-0 w-full h-full backface-hidden bg-white border border-slate-200 shadow-sm rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+                            <span className="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold mb-4 tracking-wide uppercase">
+                                {dilemma.ageGroup}
+                            </span>
+                            <h3 className="font-serif text-2xl text-slate-800 mb-4">{dilemma.scenario}</h3>
+                            <p className="text-slate-600 text-sm md:text-base leading-relaxed italic mb-8 px-4">
+                                "{dilemma.problem}"
+                            </p>
+                            <div className="mt-auto flex flex-col items-center opacity-60">
+                                <Sparkles size={20} className="mb-2" />
+                                <span className="text-xs uppercase tracking-widest">Toca para revelar sentido</span>
+                            </div>
+                        </div>
+
+                        {/* Cara Trasera (La Psicofilosofada) */}
+                        <div className="absolute inset-0 w-full h-full backface-hidden bg-slate-800 rounded-2xl p-6 text-left flex flex-col overflow-y-auto rotate-y-180 custom-scrollbar shadow-lg">
+                            <div className="mb-5">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Brain size={18} className="text-amber-400" />
+                                    <h4 className="text-amber-400 text-sm font-bold uppercase tracking-wider">Cuerpo (Evolución)</h4>
+                                </div>
+                                <p className="text-slate-200 text-sm leading-relaxed">
+                                    {dilemma.evolutionary}
+                                </p>
+                            </div>
+                            
+                            <div className="h-px bg-slate-700 w-full my-4"></div>
+                            
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Map size={18} className="text-emerald-400" />
+                                    <h4 className="text-emerald-400 text-sm font-bold uppercase tracking-wider">Alma (Existencia)</h4>
+                                </div>
+                                <p className="text-slate-200 text-sm leading-relaxed">
+                                    {dilemma.existential}
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        };
+
+        const DayDetail = ({ dayData, onBack, onComplete, isCompleted }) => {
+            useEffect(() => {
+                window.scrollTo(0, 0);
+            }, []);
+
+            return (
+                <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 md:p-8 fade-in">
+                    {/* Cabecera del Día */}
+                    <button 
+                        onClick={onBack}
+                        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-8 font-medium"
+                    >
+                        <ArrowLeft size={20} /> Volver al Camino
+                    </button>
+
+                    <div className="text-center mb-12">
+                        <span className={`inline-flex items-center justify-center p-3 rounded-2xl ${dayData.bgLight} ${dayData.color} mb-4`}>
+                            <dayData.icon size={32} />
+                        </span>
+                        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Día {dayData.id}</h2>
+                        <h1 className="font-serif text-3xl md:text-5xl text-slate-900 mb-4">{dayData.title}</h1>
+                        <p className="text-slate-500 max-w-xl mx-auto">Selecciona la edad de tu hijo/a. Lee el escenario, sumérgete en el dilema y voltea la carta para encontrar tu ancla.</p>
+                    </div>
+
+                    {/* Grid de Dilemas */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                        {dayData.dilemmas.map((dilemma, idx) => (
+                            <DilemmaCard key={idx} dilemma={dilemma} />
+                        ))}
+                    </div>
+
+                    {/* Botón de Completar */}
+                    <div className="flex justify-center">
+                        <button 
+                            onClick={() => onComplete(dayData.id)}
+                            className={`flex items-center gap-2 px-8 py-4 rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-md ${
+                                isCompleted 
+                                ? 'bg-slate-800 text-white shadow-slate-300'
+                                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
+                            }`}
+                        >
+                            {isCompleted ? (
+                                <> <CheckCircle size={20} /> Reflexión Completada </>
+                            ) : (
+                                <> <Sparkles size={20} /> Interiorizar y Avanzar </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [selectedDay, setSelectedDay] = useState(null);
+            const [completedDays, setCompletedDays] = useState([]);
+            const [maxDayUnlocked, setMaxDayUnlocked] = useState(1);
+
+            // Cargar progreso al montar
+            useEffect(() => {
+                try {
+                    const savedCompleted = localStorage.getItem('psicofilosofadas_completed');
+                    const savedMax = localStorage.getItem('psicofilosofadas_max_unlocked');
+                    if (savedCompleted) setCompletedDays(JSON.parse(savedCompleted));
+                    if (savedMax) setMaxDayUnlocked(parseInt(savedMax, 10));
+                } catch (e) {
+                    console.log("No se pudo acceder a localStorage");
+                }
+            }, []);
+
+            // Guardar progreso al cambiar
+            const saveProgress = (newCompleted, newMax) => {
+                setCompletedDays(newCompleted);
+                setMaxDayUnlocked(newMax);
+                try {
+                    localStorage.setItem('psicofilosofadas_completed', JSON.stringify(newCompleted));
+                    localStorage.setItem('psicofilosofadas_max_unlocked', newMax.toString());
+                } catch (e) {}
+            };
+
+            const handleCompleteDay = (dayId) => {
+                let newCompleted = [...completedDays];
+                if (!newCompleted.includes(dayId)) {
+                    newCompleted.push(dayId);
+                }
+                
+                // Desbloquea el siguiente día si es necesario
+                let newMax = maxDayUnlocked;
+                if (dayId === maxDayUnlocked && maxDayUnlocked < 30) {
+                    newMax = maxDayUnlocked + 1;
+                }
+                
+                saveProgress(newCompleted, newMax);
+                
+                // Volver al mapa después de un breve momento
+                setTimeout(() => setSelectedDay(null), 800);
+            };
+
+            // Renderizado de Vista Detalle
+            if (selectedDay) {
+                const dayData = DIARY_DATA.find(d => d.id === selectedDay);
+                return (
+                    <DayDetail 
+                        dayData={dayData} 
+                        onBack={() => setSelectedDay(null)}
+                        onComplete={handleCompleteDay}
+                        isCompleted={completedDays.includes(dayData.id)}
+                    />
+                );
+            }
+
+            return (
+                <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 md:p-8 fade-in">
+                    {/* Cabecera del Mapa */}
+                    <div className="text-center mb-16 bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-emerald-400 to-amber-400"></div>
+                        <h1 className="font-serif text-4xl md:text-5xl text-slate-900 mb-4 mt-2">El Camino del Desapego</h1>
+                        <p className="text-slate-600 max-w-2xl mx-auto text-lg">
+                            30 días de Psicofilosofadas. Transforma la culpa en consciencia, las rabietas en conexión y el crecimiento en aceptación.
+                        </p>
+                        
+                        {/* Barra de Progreso */}
+                        <div className="mt-8 max-w-md mx-auto">
+                            <div className="flex justify-between text-xs font-bold text-slate-400 uppercase mb-2">
+                                <span>Progreso</span>
+                                <span>{completedDays.length} / 30 Días</span>
+                            </div>
+                            <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-slate-800 transition-all duration-1000 ease-out"
+                                    style={{ width: `${(completedDays.length / 30) * 100}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* El Timeline / Mapa */}
+                    <div className="relative pb-24">
+                        {/* Línea central (Solo en Desktop) */}
+                        <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-1 bg-slate-200 -translate-x-1/2 rounded-full"></div>
+
+                        <div className="flex flex-col gap-8 md:gap-12 relative z-10">
+                            {DIARY_DATA.map((day, index) => {
+                                const isUnlocked = day.id <= maxDayUnlocked;
+                                const isCompleted = completedDays.includes(day.id);
+                                const isLeft = index % 2 === 0;
+
+                                return (
+                                    <div key={day.id} className={`flex flex-col md:flex-row items-center w-full ${isLeft ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
+                                        
+                                        {/* Mitad vacía para diseño zigzag */}
+                                        <div className="hidden md:block md:w-1/2"></div>
+                                        
+                                        {/* Nodo central */}
+                                        <div className="relative flex items-center justify-center w-12 h-12 md:w-16 md:h-16 shrink-0 my-4 md:my-0">
+                                            <div className={`absolute w-full h-full rounded-full border-4 shadow-sm transition-all duration-300
+                                                ${isCompleted ? 'bg-indigo-600 border-indigo-100 scale-100' : 
+                                                  isUnlocked ? 'bg-white border-indigo-500 scale-110' : 
+                                                  'bg-slate-100 border-slate-200 scale-90'}`}
+                                            ></div>
+                                            <span className={`relative z-10 font-bold ${isCompleted ? 'text-white' : isUnlocked ? 'text-indigo-600' : 'text-slate-400'}`}>
+                                                {isCompleted ? <CheckCircle size={20} /> : day.id}
+                                            </span>
+                                        </div>
+
+                                        {/* Tarjeta de Mapa */}
+                                        <div className={`w-full md:w-1/2 flex ${isLeft ? 'md:pl-12 md:justify-start' : 'md:pr-12 md:justify-end'}`}>
+                                            <div 
+                                                onClick={() => isUnlocked ? setSelectedDay(day.id) : null}
+                                                className={`w-full max-w-sm rounded-2xl p-6 border transition-all duration-300 relative overflow-hidden group
+                                                    ${isUnlocked 
+                                                        ? 'bg-white border-slate-200 shadow-sm hover:shadow-md cursor-pointer hover:-translate-y-1' 
+                                                        : 'bg-slate-50/50 border-slate-100 opacity-70 cursor-not-allowed'
+                                                    }
+                                                `}
+                                            >
+                                                {/* Etiqueta de Tema */}
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <span className={`text-xs font-bold uppercase tracking-wider ${isUnlocked ? day.color : 'text-slate-400'}`}>
+                                                        {day.theme}
+                                                    </span>
+                                                    {!isUnlocked && <Lock size={16} className="text-slate-300" />}
+                                                </div>
+                                                
+                                                <h3 className={`font-serif text-xl md:text-2xl mb-2 ${isUnlocked ? 'text-slate-900' : 'text-slate-400'}`}>
+                                                    {day.title}
+                                                </h3>
+                                                
+                                                {isUnlocked ? (
+                                                    <div className="mt-6 flex items-center justify-between text-sm font-semibold text-indigo-600 group-hover:text-indigo-700 transition-colors">
+                                                        <span>Explorar dilemas</span>
+                                                        <ChevronRight size={18} className="transform group-hover:translate-x-1 transition-transform" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="mt-6 text-sm font-medium text-slate-400">
+                                                        Se desbloquea al avanzar
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
